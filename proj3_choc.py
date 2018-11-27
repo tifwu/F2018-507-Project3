@@ -103,10 +103,6 @@ with open('flavors_of_cacao_cleaned.csv', encoding='utf-8') as csvDataFile:
             if countryId != None:
                 countryId = countryId[0]
 
-            statement = '''
-                            SELECT Countries.Id FROM Countries
-                            WHERE Countries.EnglishName=?
-                        '''
             cur.execute(statement, (row[8], ))
             origionId = cur.fetchone()
             #print(countryId)
@@ -127,10 +123,14 @@ conn.close()
 
 
 # Part 2: Implement logic to process user commands
+def format_cocoa(float_percentage):
+    return str(round(float_percentage * 100)) + '%'
+
 def process_command(command):
     command_list = command.split()
     return_list = []
     command_option = command_list[0]
+
     sort_param = 'b.Rating'
     order_param = 'DESC'
     limit_param = 10
@@ -142,7 +142,7 @@ def process_command(command):
                         SELECT b.SpecificBeanBarName, b.Company, c.EnglishName, b.Rating, b.CocoaPercent, c2.EnglishName
                         FROM Bars AS b
                             JOIN Countries AS c ON b.CompanyLocationId = c.Id
-                                JOIN Countries AS c2 ON b.BroadBeanOriginId = c2.Id
+                                LEFT JOIN Countries AS c2 ON b.BroadBeanOriginId = c2.Id
                     '''
         if len(command_list) >1:
             for i in command_list[1:]:
@@ -162,7 +162,7 @@ def process_command(command):
                 elif 'ratings' in i:
                     continue
                 elif 'cocoa' in i:
-                    sort_param = "B.CocoaPercent"
+                    sort_param = "b.CocoaPercent"
 
                 elif 'top' in i:
                     limit_param = i.split('=')[1]
@@ -241,7 +241,7 @@ def process_command(command):
                 elif 'ratings' in i:
                     continue
                 elif 'cocoa' in i:
-                    sort_param = "c.CocoaPercent"
+                    sort_param = "b.CocoaPercent"
                 elif 'bars_sold' in i:
                     sort_param = "COUNT(SpecificBeanBarName)"
 
@@ -283,7 +283,7 @@ def process_command(command):
                 elif 'ratings' in i:
                     continue
                 elif 'cocoa' in i:
-                    sort_param = "c.CocoaPercent"
+                    sort_param = "b.CocoaPercent"
                 elif 'bars_sold' in i:
                     sort_param = "COUNT(SpecificBeanBarName)"
 
@@ -308,13 +308,57 @@ def process_command(command):
             statement += " ORDER BY {} {} LIMIT {}".format(sort_param, order_param, limit_param)
 
 
-
     conn = sqlite3.connect(DBNAME)
     cur = conn.cursor()
 
     #print(statement)
     cur.execute(statement)
     return_list = cur.fetchall()
+    #print(return_list)
+
+    ### format cocoa percent into percentage and round up ratings
+    if command_option == 'bars':
+        for n, i in enumerate(return_list):
+            tmp_lst = list(i)
+            tmp_lst[4] = format_cocoa(i[4])
+            return_list[n] = tuple(tmp_lst)
+
+    elif command_option == 'companies':
+        if sort_param == 'b.CocoaPercent':
+            for n, i in enumerate(return_list):
+                tmp_lst = list(i)
+                tmp_lst[2] = format_cocoa(i[2])
+                return_list[n] = tuple(tmp_lst)
+        elif sort_param == 'b.Rating':
+            for n, i in enumerate(return_list):
+                tmp_lst = list(i)
+                tmp_lst[2] = round(i[2],1)
+                return_list[n] = tuple(tmp_lst)
+
+    elif command_option == 'countries':
+        if sort_param == 'b.CocoaPercent':
+            for n, i in enumerate(return_list):
+                tmp_lst = list(i)
+                tmp_lst[2] = format_cocoa(i[2])
+                return_list[n] = tuple(tmp_lst)
+        elif sort_param == 'b.Rating':
+            for n, i in enumerate(return_list):
+                tmp_lst = list(i)
+                tmp_lst[2] = round(i[2],1)
+                return_list[n] = tuple(tmp_lst)
+
+    elif command_option == 'regions':
+        if sort_param == 'b.CocoaPercent':
+            for n, i in enumerate(return_list):
+                tmp_lst = list(i)
+                tmp_lst[1] = format_cocoa(i[1])
+                return_list[n] = tuple(tmp_lst)
+        elif sort_param == 'b.Rating':
+            for n, i in enumerate(return_list):
+                tmp_lst = list(i)
+                tmp_lst[1] = round(i[1],1)
+                return_list[n] = tuple(tmp_lst)
+
 
     conn.close()
     return return_list
@@ -343,7 +387,10 @@ def interactive_prompt():
 
     while response != 'exit':
         response = input('Enter a command: ')
-        command_type = response.split()[0]
+        try:
+            command_type = response.split()[0]
+        except:
+            continue
 
         if response == 'help':
             print(help_text)
