@@ -131,6 +131,7 @@ def process_command(command):
     return_list = []
     command_option = command_list[0]
 
+    global sort_param
     sort_param = 'b.Rating'
     order_param = 'DESC'
     limit_param = 10
@@ -316,48 +317,6 @@ def process_command(command):
     return_list = cur.fetchall()
     #print(return_list)
 
-    ### format cocoa percent into percentage and round up ratings
-    if command_option == 'bars':
-        for n, i in enumerate(return_list):
-            tmp_lst = list(i)
-            tmp_lst[4] = format_cocoa(i[4])
-            return_list[n] = tuple(tmp_lst)
-
-    elif command_option == 'companies':
-        if sort_param == 'b.CocoaPercent':
-            for n, i in enumerate(return_list):
-                tmp_lst = list(i)
-                tmp_lst[2] = format_cocoa(i[2])
-                return_list[n] = tuple(tmp_lst)
-        elif sort_param == 'b.Rating':
-            for n, i in enumerate(return_list):
-                tmp_lst = list(i)
-                tmp_lst[2] = round(i[2],1)
-                return_list[n] = tuple(tmp_lst)
-
-    elif command_option == 'countries':
-        if sort_param == 'b.CocoaPercent':
-            for n, i in enumerate(return_list):
-                tmp_lst = list(i)
-                tmp_lst[2] = format_cocoa(i[2])
-                return_list[n] = tuple(tmp_lst)
-        elif sort_param == 'b.Rating':
-            for n, i in enumerate(return_list):
-                tmp_lst = list(i)
-                tmp_lst[2] = round(i[2],1)
-                return_list[n] = tuple(tmp_lst)
-
-    elif command_option == 'regions':
-        if sort_param == 'b.CocoaPercent':
-            for n, i in enumerate(return_list):
-                tmp_lst = list(i)
-                tmp_lst[1] = format_cocoa(i[1])
-                return_list[n] = tuple(tmp_lst)
-        elif sort_param == 'b.Rating':
-            for n, i in enumerate(return_list):
-                tmp_lst = list(i)
-                tmp_lst[1] = round(i[1],1)
-                return_list[n] = tuple(tmp_lst)
 
 
     conn.close()
@@ -380,6 +339,7 @@ def print_results(results):
         print(output_row)
 
 
+
 def interactive_prompt():
     help_text = load_help_text()
     response = ''
@@ -399,6 +359,50 @@ def interactive_prompt():
         elif command_type in response_type:
             try:
                 results = process_command(response)
+
+                ### format cocoa percent into percentage and round up ratings
+                if command_type == 'bars':
+                    for n, i in enumerate(results):
+                        tmp_lst = list(i)
+                        tmp_lst[4] = format_cocoa(i[4])
+                        results[n] = tuple(tmp_lst)
+
+                elif command_type == 'companies':
+                    if sort_param == 'b.CocoaPercent':
+                        for n, i in enumerate(results):
+                            tmp_lst = list(i)
+                            tmp_lst[2] = format_cocoa(i[2])
+                            results[n] = tuple(tmp_lst)
+                    elif sort_param == 'b.Rating':
+                        for n, i in enumerate(results):
+                            tmp_lst = list(i)
+                            tmp_lst[2] = round(i[2], 1)
+                            results[n] = tuple(tmp_lst)
+
+                elif command_type == 'countries':
+                    if sort_param == 'b.CocoaPercent':
+                        for n, i in enumerate(results):
+                            tmp_lst = list(i)
+                            tmp_lst[2] = format_cocoa(i[2])
+                            results[n] = tuple(tmp_lst)
+                    elif sort_param == 'b.Rating':
+                        for n, i in enumerate(results):
+                            tmp_lst = list(i)
+                            tmp_lst[2] = round(i[2], 1)
+                            results[n] = tuple(tmp_lst)
+
+                elif command_type == 'regions':
+                    if sort_param == 'b.CocoaPercent':
+                        for n, i in enumerate(results):
+                            tmp_lst = list(i)
+                            tmp_lst[1] = format_cocoa(i[1])
+                            results[n] = tuple(tmp_lst)
+                    elif sort_param == 'b.Rating':
+                        for n, i in enumerate(results):
+                            tmp_lst = list(i)
+                            tmp_lst[1] = round(i[1], 1)
+                            results[n] = tuple(tmp_lst)
+
                 print_results(results)
                 print()
             except:
